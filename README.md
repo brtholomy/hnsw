@@ -6,7 +6,7 @@
 
 ---
 
-The first thing to understand about HNSW, is that's primarily an optimized data structure, not an algorithm. Actually the algorithm used with these structures is remarkably simple: a greedy search which simply looks among all current candidates for the closest target value.
+The first thing to understand about HNSW is that it's primarily an optimized data structure, not an algorithm. Actually the algorithm used with these structures is remarkably simple: a greedy search which simply looks among all current candidates for the closest target value.
 
 What's brilliant about HNSW therefore is not its search routine, but its optimized structure for a *decentralized similarity search* using a simple greedy traversal. This makes it ideal as the backbone for realtime search applications.
 
@@ -19,8 +19,6 @@ An [important paper in 2016][malkov_2016] introduced the term "Hierarchical Navi
 1. *Small World* : referring to a unique graph with low average shortest path length and a high clustering coefficient.
 
 Thus we begin at the end: what's a "Small World"?
-
----
 
 # (Small World)
 
@@ -38,8 +36,6 @@ For example, imagine you'd like to travel from Seal Point Park in San Mateo, Cal
 
 In practice what we do is to navigate small highly clustered networks locally, find a hub with long distance links, and revert to local navigation again: we use our feet, then a car, then a train, then a plane, then a car, then our feet again. This is what small world graphs seek to emulate: it turns out that many features in nature and civilization can be modeled as a small world graph, with both a high *clustering coefficient* and a low *average shortest path*.
 
----
-
 ## Balancing L and C: the far is near and the near is near
 
 What do these terms mean?
@@ -55,11 +51,13 @@ The interesting thing about SW graphs is that they achieve a balance between the
 1. Low average shortest path length (L): random graphs have this property.
 1. High clustering coefficient (C): regular lattice graphs have this property.
 
+![chart](2015_qdrant_chart.png)
+
 Moreover, a SW graph can be constructed by either adding random connections to an ordered graph, or adding order to a random graph. Consulting the [original 1998 paper by Watts and Strogatz][ws] on small world graphs, we read:
 
 > These small-world networks result from the immediate drop in L(p) caused by the introduction of a few long-range edges. Such ‘short cuts’ connect vertices that would otherwise be much farther apart than Lrandom. For small p, each short cut has a highly nonlinear effect on L, contracting the distance not just between the pair of vertices that it connects, but between their immediate neighbourhoods.
 
-<!-- TODO: images -->
+![sw-series](2015_qdrant_sw.png)
 
 ---
 
@@ -98,8 +96,6 @@ Try out the sample code if you wish: just play with the `-p` parameter to genera
 python nsw.py -p 1
 ```
 
----
-
 # (Navigable (Small World))
 
 Our next term from HNSW to unpack is "navigable". What does "navigable" mean in the context of graph theory? Quoting from [a followup paper][malkov_2016_06] by Malkov and Ponomarenko:
@@ -108,13 +104,9 @@ Our next term from HNSW to unpack is "navigable". What does "navigable" mean in 
 
 In other words, it's simply the readiness of a graph for an efficient greedy search. Achieving logarithmic search complexity is generally considered the grand prize of algorithmic efficiency: thus the promise of creating a structure which affords both similarity search and logarithmic complexity at scale is why HNSW is such a big deal.
 
----
-
 ## What do we mean by greedy search?
 
 Let's back up a moment and define another relevant term: *greedy search*. This is "greedy" in the sense that only the *local* optimum is considered when finding the *global* optimum. There is no attempt to predict future outcomes nor learn from the past: the algorithm simply makes the best choice at every step. This kind of algorithm generally only works with orderly data structures and relatively uniform data, such as binary trees and sorted arrays - technically any problem with an optimal substructure. The advantage of this algorithm is its simplicity and robustness.
-
----
 
 ## Polylogarithmic scaling of NSW
 
@@ -132,11 +124,11 @@ or
 
 *Both* of which scale logarithmically as the graph grows, since the average *k* degree is greatly influenced by the number of "hub" nodes. So, we proceed further in the historical evolution of HNSW to its latest innovation.
 
----
-
 # (Hierarchical (Navigable (Small World)))
 
 We are finally prepared to ask: what is "hierarchical" in this context? It means that instead of searching one dense graph, we search rather a set of layers representing that same graph at distinct scales. An HNSW structure is a set of replicated NSW graphs, which grow sparser and wider at every iteration. If you collapsed the layers, you'd have a single NSW graph again.
+
+Take a look at [our sample implementation][hnsw.py].
 
 The idea is to solve the polylogarithmic scaling of NSW graphs by eliminating early iteration of all edges of highly connected hub nodes, keeping only the relevant long-range edges in the early stages of the search.
 
@@ -154,7 +146,7 @@ There is only one other important factor in the creation of these layers: at the
 
 ---
 
-Take a look at the sample code. Note that it currently uses only the simple `SelectNeighbors` routine for maximum clarity. Probably the most important section from the insertion stage is this:
+Note that our implementation currently uses only the simple `SelectNeighbors` routine for maximum clarity. Probably the most important section from the insertion stage is this:
 
 ```python
 for lc in range(min(topL, layer_i), -1, -1):
@@ -186,13 +178,9 @@ Notice how the graphs become sparser:
 ![8](img/hnsw_layer_8.png)
 ![9](img/hnsw_layer_9.png)
 
----
-
 # Conclusion
 
 Check out Qdrant's implementation of HNSW and its performance.
-
----
 
 [sw_experiment]: https://en.wikipedia.org/wiki/Small-world_experiment
 
@@ -205,3 +193,5 @@ Check out Qdrant's implementation of HNSW and its performance.
 [ws]: https://www.nature.com/articles/30918
 
 [skiplist]: https://brilliant.org/wiki/skip-lists/
+
+[hnsw.py]: https://github.com/thwh/hnsw/blob/master/hnsw.py
