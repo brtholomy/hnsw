@@ -1,3 +1,5 @@
+# Hierarchical Navigable Small World: a scalable nearest neighbor search
+
 # Introduction
 
 "Hierarchical Navigable Small World" (HNSW): an intriguing mouthful, designating a dense set of concepts developed in the last 70 years in graph theory and algorithmic science. In this brief tutorial, we'll examine this set carefully and attempt to solidify our understanding with proof-of-concept code and as many visualizations as possible.
@@ -10,10 +12,10 @@ What's brilliant about HNSW therefore is not its search routine, but its optimiz
 
 ---
 
-An [important paper in 2016][malkov_2016] introduced the term "Hierarchical Navigable Small World". But to examine HNSW, we need to unpack the term's historical layers as though it were Lisp or Polish notation: `(Hierarchical (Navigable (Small World)))`.
+An [important paper in 2016][malkov_2016] introduced the term "Hierarchical Navigable Small World", designating a novel kind of approximate nearest neighbor search. But to examine HNSW, we need to unpack the term's historical layers as though it were Lisp or Polish notation: `(Hierarchical (Navigable (Small World)))`.
 
 1. *Hierarchical*: referring to stacked subgraphs of exponentially decaying density, a structure which addresses the problem of high dimensionality.
-1. *Navigable*: referring to the search complexity of the subgraphs, which achieve (poly)logarithmic scaling using a decentralized search algorithm.[1][navigability]
+1. *Navigable*: referring to the search complexity of the subgraphs, which achieve (poly)logarithmic scaling using a [decentralized greedy search][navigability] algorithm.
 1. *Small World* : referring to a unique graph with low average shortest path length and a high clustering coefficient.
 
 Thus we begin at the end: what's a "Small World"?
@@ -57,6 +59,8 @@ Moreover, a SW graph can be constructed by either adding random connections to a
 
 > These small-world networks result from the immediate drop in L(p) caused by the introduction of a few long-range edges. Such ‘short cuts’ connect vertices that would otherwise be much farther apart than Lrandom. For small p, each short cut has a highly nonlinear effect on L, contracting the distance not just between the pair of vertices that it connects, but between their immediate neighbourhoods.
 
+<!-- TODO: images -->
+
 ---
 
 To demonstrate what we mean, take a look at our sample implementation:
@@ -84,6 +88,10 @@ def Rewire(G, p):
 
 All we've done is create a regular ring lattice with a constant degree, and then mess it up a little by adding a small number of random edges. It turns out this is enough to approximate the "small world" graph concept, which like many complex artifacts of nonlinearity in the real world, serve as an adequate model for a startling variety of phenomena otherwise intractable to quantifiable metrics: including neural networks, social networks, metabolic activity, and more.
 
+Sample output:
+
+![nsw](img/nsw_sample.png)
+
 Try out the sample code if you wish: just play with the `-p` parameter to generate a variety of graphs. For example, to create a highly randomized graph:
 
 ``` sh
@@ -97,8 +105,6 @@ python nsw.py -p 1
 Our next term from HNSW to unpack is "navigable". What does "navigable" mean in the context of graph theory? Quoting from [a followup paper][malkov_2016_06] by Malkov and Ponomarenko:
 
 > navigability, an ability to find a logarithmically short path between two arbitrary nodes using only local information, without global knowledge of the network.
-
-> https://doi.org/10.1371%2Fjournal.pone.0158162
 
 In other words, it's simply the readiness of a graph for an efficient greedy search. Achieving logarithmic search complexity is generally considered the grand prize of algorithmic efficiency: thus the promise of creating a structure which affords both similarity search and logarithmic complexity at scale is why HNSW is such a big deal.
 
@@ -160,7 +166,7 @@ for lc in range(min(topL, layer_i), -1, -1):
 
 Which means, iterate down the layers, searching each for nearest nodes to our query beginning from our entry point, and make connections to them.
 
-Samples of various runs are included below. Try running the script with various values for the commandline flags:
+Output from a sample run is included below. Try running the script with various values for the commandline flags:
 
 ```sh
 py hnsw_graphs.py --maxk=10 --ml=0.5 --save
@@ -169,7 +175,16 @@ py hnsw_graphs.py --nodes=100 --display
 
 Notice how the graphs become sparser:
 
-<!-- TODO images here-->
+![0](img/hnsw_layer_0.png)
+![1](img/hnsw_layer_1.png)
+![2](img/hnsw_layer_2.png)
+![3](img/hnsw_layer_3.png)
+![4](img/hnsw_layer_4.png)
+![5](img/hnsw_layer_5.png)
+![6](img/hnsw_layer_6.png)
+![7](img/hnsw_layer_7.png)
+![8](img/hnsw_layer_8.png)
+![9](img/hnsw_layer_9.png)
 
 ---
 

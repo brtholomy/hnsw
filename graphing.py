@@ -7,10 +7,8 @@ def MakeRingLattice(n, d):
     offsets = range(1, (d//2) + 1)
     return nx.circulant_graph(n, offsets)
 
-# https://eng.libretexts.org/Bookshelves/Computer_Science/Applied_Programming/Book%3A_Think_Complexity%3A_Exploring_Complexity_Science_with_Python_(Downey)/03%3A_Small_World_Graphs/3.04%3A_WS_graphs
 
-# Adapted from "Think Complexity", 3.4: WS graphs
-
+# Adapted from "Think Complexity", 3.4: WS graphs by Allen B. Downey
 def Rewire(G, p):
     all_nodes = set(G)
     for u, v in G.edges():
@@ -28,18 +26,10 @@ def MakeNSW(n=20, d=4, p=0.2):
     return G
 
 
-def Empty(n):
-    return nx.empty_graph(n)
-
-
 def Single():
     G = nx.Graph()
     G.add_node(0)
     return G
-
-
-def RemoveIsolates(G):
-    G.remove_nodes_from(list(nx.isolates(G)))
 
 
 def DrawGraph(G):
@@ -68,11 +58,3 @@ def SaveGraph(G, prefix='', n=0):
     DrawGraph(G)
     plt.savefig(f'figures/{prefix}_layer_{n}.png')
     plt.close()
-
-
-if __name__ == '__main__':
-    G = MakeRingLattice(n=20, d=4)
-    p = 0.2
-    Rewire(G, p)
-    nx.draw_circular(G)
-    PlotShow()
