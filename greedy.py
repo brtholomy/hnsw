@@ -1,6 +1,6 @@
+import graphing
+import networkx as nx
 
-
-# from NSW_paper : Molkov
 
 # simplest possible definition: 1-dimensional vectors.
 def Distance(q, v):
@@ -22,9 +22,6 @@ def GreedySearch(G, q, venter):
 
 
 if __name__ == '__main__':
-    import graphing
-    import networkx as nx
-
     G = graphing.MakeRingLattice(n=40, d=4)
     p = 0.2
     graphing.Rewire(G, p)

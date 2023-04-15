@@ -24,7 +24,9 @@ def Insert(HNSW: dict, q: int, maxk: int, efConstruction: int, mL: float):
     topL = TopLayer(HNSW)
 
     # new element's topmost layer: notice the normalization by mL
-    layer_i = min(floor(-1 * log(random()) * mL), topL)
+    layer_i = floor(-1 * log(random()) * mL)
+    # ensure we don't exceed our allocated layers.
+    layer_i = min(layer_i, topL)
 
     # The first phase searches [topL, layer_i) for an updated eP, closest to q
     for lc in range(topL, layer_i + 1, -1):
@@ -88,6 +90,15 @@ def SearchLayer(layer: nx.Graph, q: int, eP: int, ef: int) -> set:
     return nearestN
 
 
+def SelectNeighbors(q: int, cands: set, M: int):
+    """Note: this is the simplest possible version of this routine, and leaves
+    out the distance scaling heuristic.
+    """
+    if q in cands:
+        cands.remove(q)
+    return sorted(cands, key=lambda x: Distance(x, q))[:M + 1]
+
+
 def EntrancePoint(HNSW: dict):
     return HNSW["entrance"]
 
@@ -114,12 +125,6 @@ def Furthest(W: set, q: int):
 
 def Nearest(W: set, q: int):
     return min(W, key=lambda w: Distance(w, q))
-
-
-def SelectNeighbors(q: int, cands: set, M: int):
-    if q in cands:
-        cands.remove(q)
-    return sorted(cands, key=lambda x: Distance(x, q))[:M + 1]
 
 
 def Neighborhood(layer: nx.Graph, u: int):

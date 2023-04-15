@@ -1,5 +1,7 @@
 # Introduction
 
+"Hierarchical Navigable Small World" (HNSW): an intriguing mouthful, designating a dense set of concepts developed in the last 70 years in graph theory and algorithmic science. In this brief tutorial, we'll examine this set carefully and attempt to solidify our understanding with proof-of-concept code and as many visualizations as possible.
+
 ---
 
 The first thing to understand about HNSW, is that's primarily an optimized data structure, not an algorithm. Actually the algorithm used with these structures is remarkably simple: a greedy search which simply looks among all current candidates for the closest target value.
@@ -8,29 +10,25 @@ What's brilliant about HNSW therefore is not its search routine, but its optimiz
 
 ---
 
-To understand HNSW, we need to unpack the term's historical layers as though it were Lisp or Polish notation: `(Hierarchical (Navigable (Small World)))`.
+An [important paper in 2016][malkov_2016] introduced the term "Hierarchical Navigable Small World". But to examine HNSW, we need to unpack the term's historical layers as though it were Lisp or Polish notation: `(Hierarchical (Navigable (Small World)))`.
 
 1. *Hierarchical*: referring to stacked subgraphs of exponentially decaying density, a structure which addresses the problem of high dimensionality.
 1. *Navigable*: referring to the search complexity of the subgraphs, which achieve (poly)logarithmic scaling using a decentralized search algorithm.[1][navigability]
 1. *Small World* : referring to a unique graph with low average shortest path length and a high clustering coefficient.
 
-Thus we begin at the end: what's a "small world"?
+Thus we begin at the end: what's a "Small World"?
 
 ---
 
-# Small World
+# (Small World)
 
-What is a "small world" (SW) graph? It's graph structure which achieves a unique balance between regularity and randomness, poised at the sweet spot in which the advantages of both can be achieved.
+What is a "Small World" (SW) graph? It's graph structure which achieves a unique balance between regularity and randomness, poised at the sweet spot in which the advantages of both can be achieved. The name comes from exactly what you might expect: it's what strangers say when it turns out they have an aquaintance in common, or when you see an old friend by chance in a foreign city. With a remarkably simple experiment, the influential sociologist Stanley Milgram was able to show that this feeling is demonstrably true: he asked people to forward letters to geographically distant strangers using only firstname aquaintances as links, and it turns out that the "six degrees of separation" in saturated social networks holds true.
 
 Ideally, what we want from a graphical structure in the context of a search routine, is the ability to find our goal efficiently no matter where we begin. This requires that we address these contingencies:
 
-1. We're far from our goal. This requires that we travel far without excessive cost: in other words, that long-distance links across the graph can be found.
+1. We're far from our goal. This requires that we travel far without excessive cost: in other words, that long-distance links across the graph can be found. Randomly connected graphs tend to have long-distance links.
 
-2. We're close to our goal. This requires that we travel short distances without too many steps: thus that short-distance links can be found.
-
-Randomly connected graphs tend to have long-distance links.
-
-Regular graphs tend to have many short-distance links.
+2. We're close to our goal. This requires that we travel short distances without too many steps: thus that short-distance links can be found. Regular graphs tend to have many short-distance links.
 
 ---
 
@@ -40,109 +38,153 @@ In practice what we do is to navigate small highly clustered networks locally, f
 
 ---
 
-But what do these terms mean?
+## Balancing L and C: the far is near and the near is near
 
-## Low average shortest path length
+What do these terms mean?
 
-This simply means that the distance between any two given nodes is generally reasonable. To achieve this property, a graph must have a good distribution of long-distance edges: however, a balance is desireable, since too many edges will burden the greedy search inner loop, and too few will inflate our average path length.
+* *L, average shortest path length*: A desireable L simply means that the distance between any two given nodes is generally reasonable. To achieve this property, a graph must have a good distribution of long-distance edges: however, a balance is desireable, since too many edges will burden the greedy search inner loop, and too few will inflate our average path length.
 
----
-
-## Clustering coefficient
-
-The clustering coefficient is a measure of the degree of connectedness between nearby nodes, calculated as the ratio of actual edges to possible edges among the neighbors of any given node.
-
-    The local clustering coefficient is computed as the proportion of connections among its neighbours which are actually realised compared with the number of all possible connections.
+* *C, clustering coefficient*: The clustering coefficient is a measure of the degree of connectedness between nearby nodes, calculated as the ratio of actual edges to possible edges among the neighbors of any given node.
 
 ---
 
 The interesting thing about SW graphs is that they achieve a balance between these desireable structural features:
 
-1. Low average shortest path length (L) : random graphs achieve this
-1. High clustering coefficient (C) : regular lattice graphs achieve this
+1. Low average shortest path length (L): random graphs have this property.
+1. High clustering coefficient (C): regular lattice graphs have this property.
 
-Moreover, they can be constructed by either adding random connections to an ordered graph, or adding order to a random graph. Consulting the original 1998 paper by Watts and Strogatz on small world graphs, we read:
+Moreover, a SW graph can be constructed by either adding random connections to an ordered graph, or adding order to a random graph. Consulting the [original 1998 paper by Watts and Strogatz][ws] on small world graphs, we read:
 
-> These small-world networks result from the immediate drop in L(p) caused by the introduction of a few long-range edges. Such ‘short cuts’ connect vertices that would otherwise be much farther apart than Lrandom. For small p, each short cut has a highly nonlinear effect on L, contracting the distance not just between the pair of vertices that it connects, but between their immediate neighbourhoods
-
-Only need a small amount of random connections to achieve much shorter L
+> These small-world networks result from the immediate drop in L(p) caused by the introduction of a few long-range edges. Such ‘short cuts’ connect vertices that would otherwise be much farther apart than Lrandom. For small p, each short cut has a highly nonlinear effect on L, contracting the distance not just between the pair of vertices that it connects, but between their immediate neighbourhoods.
 
 ---
 
-# Navigable: Logarithmic search complexity
+To demonstrate what we mean, take a look at our sample implementation:
 
-Achieving logarithmic search complexity is generally considered the grand prize of algorithmic efficiency.
+```python
+def MakeNSW(n=20, d=4, p=0.2):
+    G = MakeRingLattice(n, d)
+    Rewire(G, p)
+    return G
+
+def MakeRingLattice(n, d):
+    offsets = range(1, (d//2) + 1)
+    return nx.circulant_graph(n, offsets)
+
+def Rewire(G, p):
+    all_nodes = set(G)
+    for u, v in G.edges():
+        if np.random.random() < p:
+            u_connections = set([u]) | set(G[u])
+            choices = all_nodes - u_connections
+            new_v = np.random.choice(list(choices))
+            G.remove_edge(u, v)
+            G.add_edge(u, new_v)
+```
+
+All we've done is create a regular ring lattice with a constant degree, and then mess it up a little by adding a small number of random edges. It turns out this is enough to approximate the "small world" graph concept, which like many complex artifacts of nonlinearity in the real world, serve as an adequate model for a startling variety of phenomena otherwise intractable to quantifiable metrics: including neural networks, social networks, metabolic activity, and more.
+
+Try out the sample code if you wish: just play with the `-p` parameter to generate a variety of graphs. For example, to create a highly randomized graph:
+
+``` sh
+python nsw.py -p 1
+```
 
 ---
 
-Navigability: the ability to find a logarithmically short path between any two vertices using only local information.
+# (Navigable (Small World))
+
+Our next term from HNSW to unpack is "navigable". What does "navigable" mean in the context of graph theory? Quoting from [a followup paper][malkov_2016_06] by Malkov and Ponomarenko:
+
+> navigability, an ability to find a logarithmically short path between two arbitrary nodes using only local information, without global knowledge of the network.
 
 > https://doi.org/10.1371%2Fjournal.pone.0158162
 
+In other words, it's simply the readiness of a graph for an efficient greedy search. Achieving logarithmic search complexity is generally considered the grand prize of algorithmic efficiency: thus the promise of creating a structure which affords both similarity search and logarithmic complexity at scale is why HNSW is such a big deal.
 
 ---
 
-# What do we mean by greedy search?
+## What do we mean by greedy search?
 
-Greedy search: "greedy" in the sense that only the *local* optimum is considered when finding the *global* optimum. There is no attempt to predict future outcomes nor learn from the past: the algorithm simply makes the best choice at every step. This kind of algorithm generally only works with orderly data structures and relatively uniform data, such as binary trees and sorted arrays - technically any problem with an optimal substructure.
-
-Its advantage is its simplicity and robustness.
+Let's back up a moment and define another relevant term: *greedy search*. This is "greedy" in the sense that only the *local* optimum is considered when finding the *global* optimum. There is no attempt to predict future outcomes nor learn from the past: the algorithm simply makes the best choice at every step. This kind of algorithm generally only works with orderly data structures and relatively uniform data, such as binary trees and sorted arrays - technically any problem with an optimal substructure. The advantage of this algorithm is its simplicity and robustness.
 
 ---
 
-    The Watts and Strogatz model was designed as the simplest possible model that addresses the first of the two limitations. It accounts for clustering while retaining the short average path lengths of the ER model.
+### Polylogarithmic scaling of NSW
 
-    Consequently, the model is able to at least partially explain the "small-world" phenomena in a variety of networks, such as the power grid, neural network of C. elegans, networks of movie actors, or fat-metabolism communication in budding yeast.
+Yet despite all this, it turns out that the NSW graph isn't quite performant enough for modern computing. Quoting from [the original HNSW][malkov_2016] paper by Malkov and Yashunin:
 
----
+> The average number of hops scales logarithmically, while the average degree of the nodes on the greedy path also scales logarithmically due to the facts that: 1) the greedy search tends to go through the same hubs as the network grows; 2) the average number of hub connections grows logarithmically with an increase of the network size. Thus we get an overall polylogarithmic dependence of the resulting complexity.
 
-### Why polylogarithmic scaling of NSW
+Therefore greedy search ends up yielding a polylogarithmic complexity, which is not terrible, but not great for high dimensionality. The overall cost is roughly:
 
-Why NSW isn't good enough.
+    O(logn*logk)
 
-    The reason for the polylogarithmic complexity scaling of a single greedy search in NSW is that the overall num- ber of distance computations is roughly proportional to a product of the average number of greedy algorithm hops by the average degree of the nodes on the greedy path. The average number of hops scales logarithmically [26, 44], while the average degree of the nodes on the greedy path also scales logarithmically due to the facts that: 1) the greedy search tends to go through the same hubs as the network grows [32, 44]; 2) the average num- ber of hub connections grows logarithmically with an increase of the network size. Thus we get an overall pol- ylogarithmic dependence of the resulting complexity.
-
----
-
-But it turns out that an NSW graph isn't good enough. The weakness of NSW graphs is their polylogarithmic scaling: a greedy search must deal with something like O(logn^k) complexity, since the overall cost is roughly:
+or
 
     (average number of nodes evaluated)*(average degree of nodes)
 
-*Both* of which scale logarithmically as the graph grows, since the average *k* degree is greatly influenced by the number of "hub" nodes.
+*Both* of which scale logarithmically as the graph grows, since the average *k* degree is greatly influenced by the number of "hub" nodes. So, we proceed further in the historical evolution of HNSW to its latest innovation.
 
 ---
 
-# Hierarchical
+# (Hierarchical (Navigable (Small World)))
 
-An HNSW structure is a set of replicated NSW graphs, which grow sparser and wider at every iteration. If you collapsed the layers, you'd have a single NSW graph again.
+We are finally prepared to ask: what is "hierarchical" in this context? It means that instead of searching one dense graph, we search rather a set of layers representing that same graph at distinct scales. An HNSW structure is a set of replicated NSW graphs, which grow sparser and wider at every iteration. If you collapsed the layers, you'd have a single NSW graph again.
 
 The idea is to solve the polylogarithmic scaling of NSW graphs by eliminating early iteration of all edges of highly connected hub nodes, keeping only the relevant long-range edges in the early stages of the search.
 
-The genius of this idea is especially evident when one considers the simplicity of the mechanism required to create these layers: one need only separate
+The genius of this idea is especially evident when one considers the simplicity of the mechanism required to create these layers. The most important line in our sample code is:
 
-> For every element we select an integer level l which defines the maximum layer for which the element belongs to. For all elements in a layer a proximity graph (i.e. graph containing only “short” links that approximate Delaunay graph) is built incrementally. If we set an exponentially decaying probability of l (i.e. following a geometric distribution) we get a logarithmic scaling of the expected number of layers in the structure.
+``` python
+layer_i = floor(-1 * log(random()) * mL)
+```
 
-> The idea of Hierarchical NSW algorithm is to separate the links according to their length scale into different layers and then search in a multilayer graph. In this case we can evaluate only a needed fixed portion of the connec- tions for each element independently of the networks size, thus allowing a logarithmic scalability.
+Where `mL` is just a normalization parameter to distribute the layers appropriately among some reasonable range. The idea is that the distribution of nodes among our layers decays exponentially, mirroring the logarithmic search complexity we want. The resulting structure is similar to the "[skip list][skiplist]", which is a sorted linked list with layers created probalistically.
 
-> malkov hnsw paper
+There is only one other important factor in the creation of these layers: at the stage where nearest neighbors are selected for the insertion stage in upper layers, a heuristic is applied which prefers long distance connections to nearer, thus creating graphs which are not only sparse but *wide*. Quoting Malkov and Yashunin again:
 
----
-
-Key features:
-
-1. explicit selection of the graph’s entrance node
-1. separation of links by different scales
-1. use of an advanced heuristic to select the neighbors
-
-> malkov hnsw paper
+> The idea of Hierarchical NSW algorithm is to separate the links according to their length scale into different layers and then search in a multilayer graph. In this case we can evaluate only a needed fixed portion of the connections for each element independently of the networks size, thus allowing a logarithmic scalability.
 
 ---
 
-## Skip list
+Take a look at the sample code. Note that it currently uses only the simple `SelectNeighbors` routine for maximum clarity. Probably the most important section from the insertion stage is this:
 
-There is an important precedent for HNSW graphs: the "skip list". A skip list is a linked list ...
+```python
+for lc in range(min(topL, layer_i), -1, -1):
+    layer = GetLayer(HNSW, lc)
+    W = SearchLayer(layer, q, eP, efConstruction)
+    neighbors = SelectNeighbors(q, W, maxk)
+    AddEdges(layer, q, neighbors)
+```
+
+Which means, iterate down the layers, searching each for nearest nodes to our query beginning from our entry point, and make connections to them.
+
+Samples of various runs are included below. Try running the script with various values for the commandline flags:
+
+```sh
+py hnsw_graphs.py --maxk=10 --ml=0.5 --save
+py hnsw_graphs.py --nodes=100 --display
+```
+
+Notice how the graphs become sparser:
+
+<!-- TODO images here-->
 
 ---
 
+# Conclusion
+
+Check out Qdrant's implementation of HNSW and its performance.
+
+---
+
+[malkov_2016]: https://arxiv.org/abs/1603.09320
+
+[malkov_2016_06]: https://doi.org/10.1371/journal.pone.0158162
 
 [navigability]: https://doi.org/10.48550/arXiv.1501.04931
+
+[ws]: https://www.nature.com/articles/30918
+
+[skiplist]: https://brilliant.org/wiki/skip-lists/
