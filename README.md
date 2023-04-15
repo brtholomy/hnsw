@@ -36,7 +36,7 @@ For example, imagine you'd like to travel from Seal Point Park in San Mateo, Cal
 
 In practice what we do is to navigate small highly clustered networks locally, find a hub with long distance links, and revert to local navigation again: we use our feet, then a car, then a train, then a plane, then a car, then our feet again. This is what small world graphs seek to emulate: it turns out that many features in nature and civilization can be modeled as a small world graph, with both a high *clustering coefficient* and a low *average shortest path*.
 
-## Balancing L and C: the far is near and the near is near
+## Balancing L and C: the far is near and the near is nearer
 
 What do these terms mean?
 
@@ -57,11 +57,13 @@ Moreover, a SW graph can be constructed by either adding random connections to a
 
 > These small-world networks result from the immediate drop in L(p) caused by the introduction of a few long-range edges. Such ‘short cuts’ connect vertices that would otherwise be much farther apart than Lrandom. For small p, each short cut has a highly nonlinear effect on L, contracting the distance not just between the pair of vertices that it connects, but between their immediate neighbourhoods.
 
+In the progression below, notice that in the regular lattice, getting from one side of the ring to the other would be inefficient. While in the random graph, traversing from one locale to another close by might be inefficient or even impossible:
+
 ![sw-series](img/2015_qdrant_sw.png)
 
 ---
 
-To demonstrate what we mean, take a look at our sample implementation:
+To demonstrate this idea in practice, take a look at our sample implementation:
 
 ```python
 def MakeNSW(n=20, d=4, p=0.2):
@@ -106,7 +108,22 @@ In other words, it's simply the readiness of a graph for an efficient greedy sea
 
 ## What do we mean by greedy search?
 
-Let's back up a moment and define another relevant term: *greedy search*. This is "greedy" in the sense that only the *local* optimum is considered when finding the *global* optimum. There is no attempt to predict future outcomes nor learn from the past: the algorithm simply makes the best choice at every step. This kind of algorithm generally only works with orderly data structures and relatively uniform data, such as binary trees and sorted arrays - technically any problem with an optimal substructure. The advantage of this algorithm is its simplicity and robustness.
+Let's back up a moment and define another relevant term: *greedy search*. This is "greedy" in the sense that only the *local* optimum is considered when finding the *global* optimum. There is no attempt to predict future outcomes nor learn from the past: the algorithm simply makes the best choice at every step. This kind of algorithm generally only works with orderly data structures and relatively uniform data, such as binary trees and sorted arrays - technically any problem with an optimal substructure. The advantage of this algorithm is its simplicity and robustness. It can be [this simple][greedy.py]:
+
+``` python
+def GreedySearch(G, q, venter):
+    vcurr = venter
+    σmin= Distance(q, vcurr)
+    vnext = None
+    for vfriend in nx.neighbors(G, vcurr):
+        if σfriend := Distance(q, vfriend) < σmin:
+            σmin = σfriend
+            vnext = vfriend
+    if vnext == None:
+        return vcurr
+    else:
+        return GreedySearch(G, q, vnext)
+```
 
 ## Polylogarithmic scaling of NSW
 
@@ -128,11 +145,29 @@ or
 
 We are finally prepared to ask: what is "hierarchical" in this context? It means that instead of searching one dense graph, we search rather a set of layers representing that same graph at distinct scales. An HNSW structure is a set of replicated NSW graphs, which grow sparser and wider at every iteration. If you collapsed the layers, you'd have a single NSW graph again.
 
-Take a look at [our sample implementation][hnsw.py].
+Take a look at [our sample implementation][hnsw.py]. It may help at this point to play with the code to get a sense for what's happening. Try running the script with various values for the commandline flags:
+
+```sh
+python hnsw_graphs.py --maxk=10 --ml=0.5 --save
+python hnsw_graphs.py --nodes=100 --display
+```
+
+Some layers from a single run are included below. (Note that `nx.draw_circular` doesn't preserve node locale, so the nodes may change location while the edges are preserved.) Notice how the graphs become sparser:
+
+![0](img/hnsw_layer_0.png)
+![1](img/hnsw_layer_1.png)
+![2](img/hnsw_layer_2.png)
+![3](img/hnsw_layer_3.png)
+![4](img/hnsw_layer_4.png)
+![5](img/hnsw_layer_5.png)
+![6](img/hnsw_layer_6.png)
+![7](img/hnsw_layer_7.png)
+![8](img/hnsw_layer_8.png)
+![9](img/hnsw_layer_9.png)
 
 The idea is to solve the polylogarithmic scaling of NSW graphs by eliminating early iteration of all edges of highly connected hub nodes, keeping only the relevant long-range edges in the early stages of the search.
 
-The genius of this idea is especially evident when one considers the simplicity of the mechanism required to create these layers. The most important line in our sample code is:
+The genius of this idea is especially evident when one considers the simplicity of the mechanism required to create these layers. The most important line in our implementation is:
 
 ``` python
 layer_i = floor(-1 * log(random()) * mL)
@@ -140,7 +175,7 @@ layer_i = floor(-1 * log(random()) * mL)
 
 Where `mL` is just a normalization parameter to distribute the layers appropriately among some reasonable range. The idea is that the distribution of nodes among our layers decays exponentially, mirroring the logarithmic search complexity we want. The resulting structure is similar to the "[skip list][skiplist]", which is a sorted linked list with layers created probalistically.
 
-There is only one other important factor in the creation of these layers: at the stage where nearest neighbors are selected for the insertion stage in upper layers, a heuristic is applied which prefers long distance connections to nearer, thus creating graphs which are not only sparse but *wide*. Quoting Malkov and Yashunin again:
+There is one other important factor in the creation of these layers: at the stage when nearest neighbors are selected for insertion, a heuristic is applied which prefers long distance connections, thus creating graphs which are not only sparse but *wide*. Quoting Malkov and Yashunin again:
 
 > The idea of Hierarchical NSW algorithm is to separate the links according to their length scale into different layers and then search in a multilayer graph. In this case we can evaluate only a needed fixed portion of the connections for each element independently of the networks size, thus allowing a logarithmic scalability.
 
@@ -157,26 +192,6 @@ for lc in range(min(topL, layer_i), -1, -1):
 ```
 
 Which means, iterate down the layers, searching each for nearest nodes to our query beginning from our entry point, and make connections to them.
-
-Some layers from a single run are included below. (Note that `nx.draw_circular` doesn't preserve node locale, so the nodes may change location while the edges are preserved.) Try running the script with various values for the commandline flags:
-
-```sh
-py hnsw_graphs.py --maxk=10 --ml=0.5 --save
-py hnsw_graphs.py --nodes=100 --display
-```
-
-Notice how the graphs become sparser:
-
-![0](img/hnsw_layer_0.png)
-![1](img/hnsw_layer_1.png)
-![2](img/hnsw_layer_2.png)
-![3](img/hnsw_layer_3.png)
-![4](img/hnsw_layer_4.png)
-![5](img/hnsw_layer_5.png)
-![6](img/hnsw_layer_6.png)
-![7](img/hnsw_layer_7.png)
-![8](img/hnsw_layer_8.png)
-![9](img/hnsw_layer_9.png)
 
 # Conclusion
 
@@ -195,3 +210,5 @@ Check out Qdrant's implementation of HNSW and its performance.
 [skiplist]: https://brilliant.org/wiki/skip-lists/
 
 [hnsw.py]: https://github.com/thwh/hnsw/blob/master/hnsw.py
+
+[greedy.py]: https://github.com/thwh/hnsw/blob/master/greedy.py
