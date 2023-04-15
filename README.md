@@ -24,7 +24,7 @@ Thus we begin at the end: what's a "Small World"?
 
 # (Small World)
 
-What is a "Small World" (SW) graph? It's graph structure which achieves a unique balance between regularity and randomness, poised at the sweet spot in which the advantages of both can be achieved. The name comes from exactly what you might expect: it's what strangers say when it turns out they have an aquaintance in common, or when you see an old friend by chance in a foreign city. With a remarkably simple experiment, the influential sociologist Stanley Milgram was able to show that this feeling is demonstrably true: he asked people to forward letters to geographically distant strangers using only firstname aquaintances as links, and it turns out that the "six degrees of separation" in saturated social networks holds true.
+What is a "Small World" (SW) graph? It's graph structure which achieves a unique balance between regularity and randomness, poised at the sweet spot in which the advantages of both can be achieved. The name comes from exactly what you might expect: it's what strangers say when it turns out they have an aquaintance in common, or when you see an old friend by chance in a foreign city. With [a remarkably simple experiment][sw_experiment], the influential sociologist Stanley Milgram was able to show that this feeling is demonstrably true: he asked people to forward letters to geographically distant strangers using only firstname aquaintances as links, and it turns out that the "six degrees of separation" in saturated social networks holds true.
 
 Ideally, what we want from a graphical structure in the context of a search routine, is the ability to find our goal efficiently no matter where we begin. This requires that we address these contingencies:
 
@@ -116,7 +116,7 @@ Let's back up a moment and define another relevant term: *greedy search*. This i
 
 ---
 
-### Polylogarithmic scaling of NSW
+## Polylogarithmic scaling of NSW
 
 Yet despite all this, it turns out that the NSW graph isn't quite performant enough for modern computing. Quoting from [the original HNSW][malkov_2016] paper by Malkov and Yashunin:
 
@@ -166,7 +166,7 @@ for lc in range(min(topL, layer_i), -1, -1):
 
 Which means, iterate down the layers, searching each for nearest nodes to our query beginning from our entry point, and make connections to them.
 
-Output from a sample run is included below. Try running the script with various values for the commandline flags:
+Some layers from a single run are included below. (Note that `nx.draw_circular` doesn't preserve node locale, so the nodes may change location while the edges are preserved.) Try running the script with various values for the commandline flags:
 
 ```sh
 py hnsw_graphs.py --maxk=10 --ml=0.5 --save
@@ -193,6 +193,8 @@ Notice how the graphs become sparser:
 Check out Qdrant's implementation of HNSW and its performance.
 
 ---
+
+[sw_experiment]: https://en.wikipedia.org/wiki/Small-world_experiment
 
 [malkov_2016]: https://arxiv.org/abs/1603.09320
 
