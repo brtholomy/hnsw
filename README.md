@@ -8,7 +8,7 @@
 
 The first thing to understand about HNSW is that it's primarily an optimized data structure, not an algorithm. Actually the algorithm used with these structures is remarkably simple: a greedy search which simply looks among all current candidates for the closest target value.
 
-What's brilliant about HNSW therefore is not its search routine, but its optimized structure for a *decentralized similarity search* using a simple greedy traversal. This makes it ideal as the backbone for realtime search applications.
+What's brilliant about HNSW therefore is not its search routine, but its optimized structure for a *decentralized similarity search* using a simple greedy traversal. This makes it ideal as the backbone for mealtime search applications.
 
 ---
 
@@ -22,7 +22,7 @@ Thus we begin at the end: what's a "Small World"?
 
 # (Small World)
 
-What is a "Small World" (SW) graph? It's graph structure which achieves a unique balance between regularity and randomness, poised at the sweet spot in which the advantages of both can be achieved. The name comes from exactly what you might expect: it's what strangers say when it turns out they have an aquaintance in common, or when you see an old friend by chance in a foreign city. With [a remarkably simple experiment][sw_experiment], the influential sociologist Stanley Milgram was able to show that this feeling is demonstrably true: he asked people to forward letters to geographically distant strangers using only firstname aquaintances as links, and it turns out that the "six degrees of separation" in saturated social networks holds true.
+What is a "Small World" (SW) graph? It's graph structure which achieves a unique balance between regularity and randomness, poised at the sweet spot in which the advantages of both can be achieved. The name comes from exactly what you might expect: it's what strangers say when it turns out they have an acquaintance in common, or when you see an old friend by chance in a foreign city. With [a remarkably simple experiment][sw_experiment], the influential sociologist Stanley Milgram was able to show that this feeling is demonstrably true: he asked people to forward letters to geographically distant strangers using only first-name acquaintances as links, and it turns out that the "six degrees of separation" in saturated social networks holds true.
 
 Ideally, what we want from a graphical structure in the context of a search routine, is the ability to find our goal efficiently no matter where we begin. This requires that we address these contingencies:
 
@@ -40,13 +40,13 @@ In practice what we do is to navigate small highly clustered networks locally, f
 
 What do these terms mean?
 
-* *L, average shortest path length*: A desireable L simply means that the distance between any two given nodes is generally reasonable. To achieve this property, a graph must have a good distribution of long-distance edges: however, a balance is desireable, since too many edges will burden the greedy search inner loop, and too few will inflate our average path length.
+* *L, average shortest path length*: A desirable L simply means that the distance between any two given nodes is generally reasonable. To achieve this property, a graph must have a good distribution of long-distance edges: however, a balance is desirable, since too many edges will burden the greedy search inner loop, and too few will inflate our average path length.
 
 * *C, clustering coefficient*: The clustering coefficient is a measure of the degree of connectedness between nearby nodes, calculated as the ratio of actual edges to possible edges among the neighbors of any given node.
 
 ---
 
-The interesting thing about SW graphs is that they achieve a balance between these desireable structural features:
+The interesting thing about SW graphs is that they achieve a balance between these desirable structural features:
 
 1. Low average shortest path length (L): random graphs have this property.
 1. High clustering coefficient (C): regular lattice graphs have this property.
