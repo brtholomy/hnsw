@@ -51,13 +51,13 @@ The interesting thing about SW graphs is that they achieve a balance between the
 1. Low average shortest path length (L): random graphs have this property.
 1. High clustering coefficient (C): regular lattice graphs have this property.
 
-![chart](2015_qdrant_chart.png)
+![chart](img/2015_qdrant_chart.png)
 
 Moreover, a SW graph can be constructed by either adding random connections to an ordered graph, or adding order to a random graph. Consulting the [original 1998 paper by Watts and Strogatz][ws] on small world graphs, we read:
 
 > These small-world networks result from the immediate drop in L(p) caused by the introduction of a few long-range edges. Such ‘short cuts’ connect vertices that would otherwise be much farther apart than Lrandom. For small p, each short cut has a highly nonlinear effect on L, contracting the distance not just between the pair of vertices that it connects, but between their immediate neighbourhoods.
 
-![sw-series](2015_qdrant_sw.png)
+![sw-series](img/2015_qdrant_sw.png)
 
 ---
 
