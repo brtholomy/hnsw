@@ -88,7 +88,7 @@ def Rewire(G, p):
 
 All we've done is create a regular ring lattice with a constant degree, and then mess it up a little by adding a small number of random edges. It turns out this is enough to approximate the "small world" graph concept, which like many complex artifacts of nonlinearity in the real world, serve as an adequate model for a startling variety of phenomena otherwise intractable to quantifiable metrics: including neural networks, social networks, metabolic activity, and more.
 
-Sample output:
+A generated NSW:
 
 ![nsw](img/nsw_sample.png)
 
@@ -104,7 +104,7 @@ Our next term from HNSW to unpack is "navigable". What does "navigable" mean in 
 
 > navigability, an ability to find a logarithmically short path between two arbitrary nodes using only local information, without global knowledge of the network.
 
-In other words, it's simply the readiness of a graph for an efficient greedy search. Achieving logarithmic search complexity is generally considered the grand prize of algorithmic efficiency: thus the promise of creating a structure which affords both similarity search and logarithmic complexity at scale is why HNSW is such a big deal.
+In other words, the readiness of a graph for an efficient greedy search. Achieving logarithmic search complexity is generally considered the grand prize of algorithmic efficiency: thus the promise of creating a structure which affords both similarity search and logarithmic complexity at scale is why HNSW is such a big deal.
 
 ## What do we mean by greedy search?
 
@@ -170,10 +170,10 @@ Options:
 Some layers from a single run are included below. (Note that `nx.draw_circular` doesn't preserve node locale, so the nodes may change location while the edges are preserved.) Notice how the graphs become sparser:
 
 ![0](img/hnsw_layer_0.png)
+![1](img/hnsw_layer_1.png)
 ![2](img/hnsw_layer_2.png)
 ![3](img/hnsw_layer_3.png)
 ![5](img/hnsw_layer_5.png)
-![7](img/hnsw_layer_7.png)
 
 The idea is to solve the polylogarithmic scaling of NSW graphs by eliminating early iteration through highly connected hub nodes, keeping only the relevant long-range edges in the early stages of the search. According to our earlier analogy, that'd be like taking a plane, then a car, and finally walking.
 
@@ -201,11 +201,13 @@ for lc in range(min(topL, layer_i), -1, -1):
     AddEdges(layer, q, neighbors)
 ```
 
-Which means, iterate down the layers, searching each for nearest nodes to our query beginning from our entry point, and make connections to them.
+Which means, iterate down the layers, searching each for nearest nodes to our query beginning from our entry point, and make connections to them. There's lots of parameters to tweak along the way, but the general idea is still remarkably simple.
 
 # Conclusion
 
-Check out Qdrant's implementation of HNSW and its performance.
+Hopefully we've gained a new appreciation of the importance of HNSW and its relevance to scalable similarity search.
+
+To learn more, check out Qdrant's implementation of HNSW and [its performance metrics][qdrant_benchmark].
 
 [sw_experiment]: https://en.wikipedia.org/wiki/Small-world_experiment
 
@@ -222,3 +224,5 @@ Check out Qdrant's implementation of HNSW and its performance.
 [hnsw.py]: https://github.com/thwh/hnsw/blob/master/hnsw.py
 
 [greedy.py]: https://github.com/thwh/hnsw/blob/master/greedy.py
+
+[qdrant_benchmark]: https://qdrant.tech/benchmarks/
