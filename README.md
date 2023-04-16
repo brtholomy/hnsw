@@ -2,13 +2,13 @@
 
 # Introduction
 
-"Hierarchical Navigable Small World" (HNSW): an intriguing mouthful, designating a dense set of concepts developed in the last 70 years in graph theory and algorithmic science. In this brief tutorial, we'll examine this set carefully and attempt to solidify our understanding with proof-of-concept code and as many visualizations as possible.
+"Hierarchical Navigable Small World" (HNSW): an intriguing mouthful, designating a dense bouquet of concepts developed in the last 70 years in sociology, graph theory, and algorithmic science. In this brief tutorial, we'll examine these concepts carefully and attempt to solidify our understanding with proof-of-concept code and as many visualizations as possible.
 
 ---
 
 The first thing to understand about HNSW is that it's primarily an optimized data structure, not an algorithm. Actually the algorithm used with these structures is remarkably simple: a greedy search which simply looks among all current candidates for the closest target value.
 
-What's brilliant about HNSW therefore is not its search routine, but its optimized structure for a *decentralized similarity search* using a simple greedy traversal. This makes it ideal as the backbone for mealtime search applications.
+What's brilliant about HNSW therefore is not its search routine, but its optimized structure for a *decentralized similarity search* using a simple greedy traversal. This makes it ideal as the backbone for realtime search applications.
 
 ---
 
@@ -22,34 +22,29 @@ Thus we begin at the end: what's a "Small World"?
 
 # (Small World)
 
-What is a "Small World" (SW) graph? It's graph structure which achieves a unique balance between regularity and randomness, poised at the sweet spot in which the advantages of both can be achieved. The name comes from exactly what you might expect: it's what strangers say when it turns out they have an acquaintance in common, or when you see an old friend by chance in a foreign city. With [a remarkably simple experiment][sw_experiment], the influential sociologist Stanley Milgram was able to show that this feeling is demonstrably true: he asked people to forward letters to geographically distant strangers using only first-name acquaintances as links, and it turns out that the "six degrees of separation" in saturated social networks holds true.
+What is a "Small World" (SW) graph? It's graph structure which achieves a unique balance between regularity and randomness, poised at the sweet spot in which the advantages of both can be achieved. The name comes from exactly what you might expect: it's what strangers say when they have an acquaintance in common, or when you see an old friend by chance in a foreign city. With [a remarkably simple experiment][sw_experiment], the influential sociologist Stanley Milgram was able to show that this feeling is demonstrably true: he asked people to forward letters to geographically distant strangers using only first-name acquaintances as links, and it turns out that the "six degrees of separation" in saturated social networks holds true.
 
 Ideally, what we want from a graphical structure in the context of a search routine, is the ability to find our goal efficiently no matter where we begin. This requires that we address these contingencies:
 
 1. We're far from our goal. This requires that we travel far without excessive cost: in other words, that long-distance links across the graph can be found. Randomly connected graphs tend to have long-distance links.
 
-2. We're close to our goal. This requires that we travel short distances without too many steps: thus that short-distance links can be found. Regular graphs tend to have many short-distance links.
+2. We're close to our goal. This requires that we travel short distances without too many steps: thus that short-distance links can be found. Regular lattice graphs tend to have many short-distance links.
 
 ---
 
 For example, imagine you'd like to travel from Seal Point Park in San Mateo, California to Prospect Park in Brooklyn, New York. You could walk, ride a bike, drive, or take a personal helicopter in short trips. But even if you were driving, if the travel network were only locally connected it would require that you use only local roads between towns, and the trip would be highly inefficient.
 
-In practice what we do is to navigate small highly clustered networks locally, find a hub with long distance links, and revert to local navigation again: we use our feet, then a car, then a train, then a plane, then a car, then our feet again. This is what small world graphs seek to emulate: it turns out that many features in nature and civilization can be modeled as a small world graph, with both a high *clustering coefficient* and a low *average shortest path*.
+In practice what we do is to navigate small highly clustered networks locally, find a hub with long distance links, and revert to local navigation again: we use our feet, then a car, then a train, then a plane, then a car, then our feet again. This is what small world graphs seek to emulate: many features in nature and civilization can be modeled as a small world graph, with both a high *clustering coefficient* and a low *average shortest path*.
 
 ## Balancing L and C: the far is near and the near is nearer
 
 What do these terms mean?
 
-* *L, average shortest path length*: A desirable L simply means that the distance between any two given nodes is generally reasonable. To achieve this property, a graph must have a good distribution of long-distance edges: however, a balance is desirable, since too many edges will burden the greedy search inner loop, and too few will inflate our average path length.
+* *L, average shortest path length*: A desirable *L* simply means that the distance between any two given nodes is generally reasonable. To achieve this property, a graph must have a good distribution of long-distance edges: however, a balance is desirable, since too many edges will burden the greedy search inner loop, and too few will inflate our average path length.
 
 * *C, clustering coefficient*: The clustering coefficient is a measure of the degree of connectedness between nearby nodes, calculated as the ratio of actual edges to possible edges among the neighbors of any given node.
 
----
-
-The interesting thing about SW graphs is that they achieve a balance between these desirable structural features:
-
-1. Low average shortest path length (L): random graphs have this property.
-1. High clustering coefficient (C): regular lattice graphs have this property.
+Random graphs tend to have a low *L*, because they make connections between distant nodes such that getting stuck iterating through a local network far from your goal is unlikely. On the other hand, regular lattice graphs have high *C*, because local nodes are connected by definition. The interesting thing about SW graphs is that they achieve a balance between these desirable features, by sitting somewhere between order and chaos:
 
 ![chart](img/2015_qdrant_chart.png)
 
@@ -86,7 +81,7 @@ def Rewire(G, p):
             G.add_edge(u, new_v)
 ```
 
-All we've done is create a regular ring lattice with a constant degree, and then mess it up a little by adding a small number of random edges. It turns out this is enough to approximate the "small world" graph concept, which like many complex artifacts of nonlinearity in the real world, serve as an adequate model for a startling variety of phenomena otherwise intractable to quantifiable metrics: including neural networks, social networks, metabolic activity, and more.
+All we've done is create a regular ring lattice with a constant degree, and then mess it up a little by adding a small number of random edges. It turns out this is enough to approximate the "small world" graph concept, which like many complex artifacts of nonlinearity in the real world, serves as an adequate model for a startling variety of phenomena otherwise intractable to quantifiable metrics: including neural networks, social networks, metabolic activity, and more.
 
 A generated NSW:
 
@@ -127,7 +122,7 @@ def GreedySearch(G, q, venter):
 
 ## Polylogarithmic scaling of NSW
 
-Yet despite all this, it turns out that the NSW graph isn't quite performant enough for modern computing. Quoting from [the original HNSW][malkov_2016] paper by Malkov and Yashunin:
+Yet despite all this, the NSW graph isn't quite performant enough for modern computing. Quoting from [the original HNSW][malkov_2016] paper by Malkov and Yashunin:
 
 > The average number of hops scales logarithmically, while the average degree of the nodes on the greedy path also scales logarithmically due to the facts that: 1) the greedy search tends to go through the same hubs as the network grows; 2) the average number of hub connections grows logarithmically with an increase of the network size. Thus we get an overall polylogarithmic dependence of the resulting complexity.
 
@@ -199,7 +194,7 @@ for lc in range(min(topL, layer_i), -1, -1):
 
 Which means, iterate down the layers, searching each for nearest nodes to our query beginning from our entry point, and make connections to them. There's lots of parameters to tweak along the way, but the general idea is still remarkably simple.
 
-# Conclusion
+---
 
 Hopefully we've gained a new appreciation of the importance of HNSW and its relevance to scalable similarity search.
 
