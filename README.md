@@ -162,11 +162,11 @@ Options:
   --save / --nosave     whether to save the graphs as .png files to disk
 ```
 
-Some layers from a single run are shown below. (Note that `nx.draw_circular` doesn't preserve node locale, so the nodes may change location while the edges are preserved.) Notice how the graphs become sparser:
+Some layers from a single run are shown below. (Note that `nx.draw_circular` doesn't preserve node locale, so the nodes may change location while the edges are preserved.) Notice how the graphs become sparser as we travel up the layers:
 
 ![series](img/layers.gif)
 
-The idea is to solve the polylogarithmic scaling of NSW graphs by eliminating early iteration through highly connected hub nodes, keeping only the relevant long-range edges in the early stages of the search. According to our earlier analogy, that'd be like taking a plane, then a car, and finally walking.
+The idea is to solve the polylogarithmic scaling of NSW graphs by eliminating early iteration through highly connected hub nodes, keeping only the relevant long-range edges in the early stages of the search. We begin from the top where it's sparse and wide, proceeding down to where it's dense and narrow: according to our earlier analogy, that'd be like taking a plane, then a car, and finally walking.
 
 The genius of this idea is especially evident when one considers the simplicity of the mechanism required to create these layers. The most important line in our implementation is:
 
