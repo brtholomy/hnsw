@@ -56,5 +56,5 @@ def PlotShow():
 
 def SaveGraph(G, prefix='', n=0):
     DrawGraph(G)
-    plt.savefig(f'figures/{prefix}_layer_{n}.png')
+    plt.savefig(f'img/{prefix}_layer_{n}.png')
     plt.close()

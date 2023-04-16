@@ -190,11 +190,14 @@ def ConstructHNSW(layers: int, maxk: int, n: int, efConstruction: int, mL: float
 @click.option(
     '--display', '-d',
     is_flag=True,
+    show_default=True,
     help='whether to display the graphs using plt.Show()'
 )
 @click.option(
-    '--save', '-s',
+    '--save/--nosave',
     is_flag=True,
+    show_default=True,
+    default=True,
     help='whether to save the graphs as .png files to disk'
 )
 def Main(layers, maxk, nodes, ef, ml, display, save):

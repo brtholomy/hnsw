@@ -145,27 +145,37 @@ or
 
 We are finally prepared to ask: what is "hierarchical" in this context? It means that instead of searching one dense graph, we search rather a set of layers representing that same graph at distinct scales. An HNSW structure is a set of replicated NSW graphs, which grow sparser and wider at every iteration. If you collapsed the layers, you'd have a single NSW graph again.
 
-Take a look at [our sample implementation][hnsw.py]. It may help at this point to play with the code to get a sense for what's happening. Try running the script with various values for the commandline flags:
+Take a look at [the sample implementation][hnsw.py]: it was written as an attempt to mirror the original research formulation as closely as possible with readable Python. Most of the uninteresting functions are factored out of the two main functions, `Insert` and `SearchLayer`. It may help at this point to play with the code to get a sense for what's happening. Try running the script with various values for the commandline flags:
 
 ```sh
-python hnsw_graphs.py --maxk=10 --ml=0.5 --save
-python hnsw_graphs.py --nodes=100 --display
+python hnsw_graphs.py --maxk=10 --ml=0.5
+```
+
+To see them all:
+
+```sh
+python hnsw.py --help
+
+Options:
+  -l, --layers INTEGER  number of hierarchical layers  [default: 10]
+  -k, --maxk INTEGER    max degree per node  [default: 5]
+  -n, --nodes INTEGER   number of nodes to insert  [default: 20]
+  --ef INTEGER          max size of the candidate set during search  [default: 5]
+  --ml FLOAT            normalization factor for probability of inserting
+                        nodes at subsequent levels  [default: 3.0]
+  -d, --display         whether to display the graphs using plt.Show()
+  --save / --nosave     whether to save the graphs as .png files to disk
 ```
 
 Some layers from a single run are included below. (Note that `nx.draw_circular` doesn't preserve node locale, so the nodes may change location while the edges are preserved.) Notice how the graphs become sparser:
 
 ![0](img/hnsw_layer_0.png)
-![1](img/hnsw_layer_1.png)
 ![2](img/hnsw_layer_2.png)
 ![3](img/hnsw_layer_3.png)
-![4](img/hnsw_layer_4.png)
 ![5](img/hnsw_layer_5.png)
-![6](img/hnsw_layer_6.png)
 ![7](img/hnsw_layer_7.png)
-![8](img/hnsw_layer_8.png)
-![9](img/hnsw_layer_9.png)
 
-The idea is to solve the polylogarithmic scaling of NSW graphs by eliminating early iteration of all edges of highly connected hub nodes, keeping only the relevant long-range edges in the early stages of the search.
+The idea is to solve the polylogarithmic scaling of NSW graphs by eliminating early iteration through highly connected hub nodes, keeping only the relevant long-range edges in the early stages of the search. According to our earlier analogy, that'd be like taking a plane, then a car, and finally walking.
 
 The genius of this idea is especially evident when one considers the simplicity of the mechanism required to create these layers. The most important line in our implementation is:
 
