@@ -90,16 +90,16 @@ def SearchLayer(layer: nx.Graph, q: int, eP: int, ef: int) -> set:
     return nearestN
 
 
-def SelectNeighbors(q: int, cands: set, M: int):
+def SelectNeighbors(q: int, cands: set, M: int) -> set:
     """Note: this is the simplest possible version of this routine, and leaves
     out the distance scaling heuristic.
     """
     if q in cands:
         cands.remove(q)
-    return sorted(cands, key=lambda x: Distance(x, q))[:M + 1]
+    return set(sorted(cands, key=lambda x: Distance(x, q))[:M + 1])
 
 
-def EntrancePoint(HNSW: dict):
+def EntrancePoint(HNSW: dict) -> int:
     return HNSW["entrance"]
 
 
@@ -107,31 +107,31 @@ def SetEntrancePoint(HNSW: dict, eP: int):
     HNSW["entrance"] = eP
 
 
-def GetLayer(HNSW: dict, lc: int):
+def GetLayer(HNSW: dict, lc: int) -> nx.Graph:
     return HNSW["layers"][lc]
 
 
-def TopLayer(HNSW: dict):
+def TopLayer(HNSW: dict) -> int:
     return len(HNSW["layers"]) - 1
 
 
-def Distance(u: int, v: int):
+def Distance(u: int, v: int) -> int:
     return abs(u - v)
 
 
-def Furthest(W: set, q: int):
+def Furthest(W: set, q: int) -> int:
     return max(W, key=lambda w: Distance(w, q))
 
 
-def Nearest(W: set, q: int):
+def Nearest(W: set, q: int) -> int:
     return min(W, key=lambda w: Distance(w, q))
 
 
-def Neighborhood(layer: nx.Graph, u: int):
+def Neighborhood(layer: nx.Graph, u: int) -> set:
     # Always return at least the anchor point
     if u not in layer:
-        return (0,)
-    return layer[u]
+        return set({0: {}})
+    return set(layer[u])
 
 
 def AddEdges(layer: nx.Graph, u: int, neighbors: set):
@@ -144,7 +144,7 @@ def ShrinkEdges(layer: nx.Graph, u: int, new_edges: set):
     layer.remove_edges_from(removes)
 
 
-def ConstructHNSW(layers: int, maxk: int, n: int, efConstruction: int, mL: float):
+def ConstructHNSW(layers: int, maxk: int, n: int, efConstruction: int, mL: float) -> dict:
     HNSW = {
         "entrance": 0,
         # We seed the stack with a single 0 node in all layers.
