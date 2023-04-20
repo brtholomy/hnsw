@@ -8,24 +8,6 @@ def MakeRingLattice(n, d):
     return nx.circulant_graph(n, offsets)
 
 
-# Adapted from "Think Complexity", 3.4: WS graphs by Allen B. Downey
-def Rewire(G, p):
-    all_nodes = set(G)
-    for u, v in G.edges():
-        if np.random.random() < p:
-            u_connections = set([u]) | set(G[u])
-            choices = all_nodes - u_connections
-            new_v = np.random.choice(list(choices))
-            G.remove_edge(u, v)
-            G.add_edge(u, new_v)
-
-
-def MakeNSW(n=20, d=4, p=0.2):
-    G = MakeRingLattice(n, d)
-    Rewire(G, p)
-    return G
-
-
 def Single():
     G = nx.Graph()
     G.add_node(0)

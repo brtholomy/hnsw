@@ -1,5 +1,26 @@
-import graphing
 import click
+import networkx as nx
+import numpy as np
+
+import graphing
+
+
+def MakeNSW(n: int=20, d: int=4, p:float=0.2) -> nx.Graph:
+    G = graphing.MakeRingLattice(n, d)
+    Rewire(G, p)
+    return G
+
+
+# Adapted from "Think Complexity", 3.4: WS graphs by Allen B. Downey
+def Rewire(G: nx.Graph, p: float):
+    all_nodes = set(G)
+    for u, v in G.edges():
+        if np.random.random() < p:
+            u_connections = set([u]) | set(G[u])
+            choices = all_nodes - u_connections
+            new_v = np.random.choice(list(choices))
+            G.remove_edge(u, v)
+            G.add_edge(u, new_v)
 
 
 @click.command()
@@ -32,7 +53,7 @@ import click
     help='whether to save the graphs as .png files'
 )
 def Main(nodes, degree, prob, display, save):
-    G = graphing.MakeNSW(nodes, degree, prob)
+    G = MakeNSW(nodes, degree, prob)
 
     if display:
         graphing.DrawGraph(G)
