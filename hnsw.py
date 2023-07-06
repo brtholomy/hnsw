@@ -29,13 +29,13 @@ def Insert(HNSW: dict, q: int, maxk: int, efConstruction: int, mL: float):
     layer_i = min(layer_i, topL)
 
     # The first phase searches [topL, layer_i) for an updated eP, closest to q
-    for lc in range(topL, layer_i + 1, -1):
+    for lc in range(topL, layer_i, -1):
         layer = GetLayer(HNSW, lc)
         W = SearchLayer(layer, q, eP, ef=1)
         eP = Nearest(W, q)
 
     # Now searches [layer_i, 0) using the found eP
-    for lc in range(min(topL, layer_i), -1, -1):
+    for lc in range(layer_i, -1, -1):
         layer = GetLayer(HNSW, lc)
         W = SearchLayer(layer, q, eP, efConstruction)
         neighbors = SelectNeighbors(q, W, maxk)
