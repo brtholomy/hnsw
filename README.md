@@ -1,5 +1,7 @@
 # Hierarchical Navigable Small World: a scalable nearest neighbor search
 
+by [Bartholomy](https://www.bartholomy.ooo/tags/topology/)
+
 # Introduction
 
 "Hierarchical Navigable Small World" (HNSW): an intriguing mouthful, designating a dense bouquet of concepts developed in the last 70 years in sociology, graph theory, and algorithmic science. In this brief tutorial, we'll examine these concepts carefully and attempt to solidify our understanding with proof-of-concept code and as many visualizations as possible.
@@ -199,6 +201,8 @@ Which means, iterate down the layers, searching each for nearest nodes to our qu
 Hopefully we've gained a new appreciation of the importance of HNSW and its relevance to scalable similarity search.
 
 To learn more, check out Qdrant's implementation of HNSW and [its performance metrics][qdrant_benchmark].
+
+[Read more of Bartholomy](https://www.bartholomy.ooo/tags/intelligence/).
 
 [sw_experiment]: https://en.wikipedia.org/wiki/Small-world_experiment
 
